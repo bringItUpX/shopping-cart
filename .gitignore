@@ -1,0 +1,7 @@
+
+simpleServer/.flowconfig
+simpleServer/.data/*
+simpleServer/.je-project-settings/*
+simpleServer/package.json
+simpleServer/simpleServer.sublime-project
+simpleServer/simpleServer.sublime-workspace

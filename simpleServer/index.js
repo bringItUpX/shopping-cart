@@ -1,22 +1,43 @@
 /**
-* main file for node.js to running a server
+* main file for node.js to running a server.
+* it is planned thtat the server is for a shop system with a user management.
+* Users take something in the cart and buy it.
 *
 * @author bringItUpX
-* @date 2018-07-21
+* @date 2018-07-22
 */
 
 //Dependencies
 var http = require('http');
+var https = require('https');
 var url  = require('url');
 var StringDecoder = require('string_decoder').StringDecoder;
+var fs = require('fs');
+var handlers = require('./lib/handlers');
+var helpers = require('./lib/helpers');
 
-var server = http.createServer(function(req, ret) {
+var httpServer = http.createServer(function(req, ret) {
 	unifiedServer(req, ret);
 })
 
-server.listen(3000, function(){
-	console.log('server has started to listing on port 3000');
+httpServer.listen(3000, function(){
+	console.log(' http server has started to listing on port 3000');
 })
+
+// the same for https server
+// Instantiate the HTTPS server
+var httpsServerOptions = {
+  'key': fs.readFileSync('./https/key.pem'),
+  'cert': fs.readFileSync('./https/cert.pem')
+};
+var httpsServer = https.createServer(httpsServerOptions,function(req,ret){
+  unifiedServer(req,ret);
+});
+
+// Start the HTTPS server
+httpsServer.listen(3001,function(){
+ console.log('The https server is listening on port ' + 3001);
+});
 
 var unifiedServer = function(req, ret) {
 
@@ -26,7 +47,6 @@ var unifiedServer = function(req, ret) {
 	var path = parsedUrl.pathname;
 	var trimmedPath = path.replace(/^\/+|\/+$/g,'');
 	console.log('received a request with path: ' + path);
-	console.log('received a request with trimmedPath: ' + trimmedPath);
 	// get the http method
 	var method = req.method.toLowerCase();
 	// get the query
@@ -43,15 +63,19 @@ req.on('data', function (data){
 
 req.on('end', function (){
 	buffer += decoder.end();
-	
 	var data = {
 		'method': method,
 		'query' : queryStringObject,
 		'path'  : trimmedPath,
-		'headers' : headers
+		'headers' : headers,
+		'payload' : helpers.parseJsonToObject(buffer)
 	};
 
 	var chooseHandler = typeof(router[trimmedPath]) == 'undefined' ? handlers.notFound : router[trimmedPath];
+	console.log('received a request with trimmedPath: ' + trimmedPath);
+	console.log('method is: ', data.method);
+	console.log('payload is: ', data.payload);
+	console.log('query is: ', data.query);
 	chooseHandler(data, function(statusCode, data) {
 		statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
 		data = typeof(data) == 'object' ? data : {};
@@ -66,25 +90,8 @@ req.on('end', function (){
 })
 }
 
-var message = 'Hello to Pirple!';
-
-// all handlers
-
-var handlers = {};
-
-handlers.hello = function (data, callback){
-	if (data.method == 'post'){
-		callback(200, {"hello" : message});
-	} else {
-		callback(404, {});
-	}
-}
-
-handlers.notFound = function (data, callback){
-	callback(404, {});
-}
-
-// the router from path to right handler
+// the router from path to the right handler
 var router = {
-	"hello" : handlers.hello
+	"hello" : handlers.hello,
+	"users" : handlers.users
 };
