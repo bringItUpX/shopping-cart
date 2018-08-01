@@ -93,5 +93,6 @@ req.on('end', function (){
 // the router from path to the right handler
 var router = {
 	"hello" : handlers.hello,
-	"users" : handlers.users
+	"users" : handlers.users,
+	"tokens" : handlers.tokens
 };
