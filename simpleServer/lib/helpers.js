@@ -18,7 +18,6 @@ helpers.parseJsonToObject = function(str){
     var obj = JSON.parse(str);
     return obj;
   } catch(e){
-    console.log('parseJsonToObject is not possible');
     return {};
   }
 };
@@ -110,6 +109,7 @@ helpers.sendTwilioSms = function(phone,msg,callback){
     callback('Given parameters were missing or invalid');
   }
 };
+
 
 // Export the module
 module.exports = helpers;

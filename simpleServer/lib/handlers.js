@@ -6,13 +6,17 @@
 // Dependencies
 var _data = require('./data');
 var helpers = require('./helpers');
+var config = require('./config');
 
 // Define all the handlers
 var handlers = {};
 
 // Ping
 handlers.ping = function(data,callback){
+  setTimeout(function(){
     callback(200);
+  },5000);
+
 };
 
 // Not-Found
@@ -66,7 +70,6 @@ handlers._users.post = function(data,callback){
             if(!err){
               callback(200);
             } else {
-              console.log(err);
               callback(500,{'Error' : 'Could not create the new user'});
             }
           });
@@ -81,8 +84,7 @@ handlers._users.post = function(data,callback){
     });
 
   } else {
-    callback(400,{'Error' : 'Missing required field'});
-    console.log('firstName: ' + firstName, 'lastName: ' + lastName, 'phone: ' + phone, 'password: ' + password, 'tosAgreement: ' + tosAgreement);
+    callback(400,{'Error' : 'Missing required fields'});
   }
 
 };
@@ -91,8 +93,9 @@ handlers._users.post = function(data,callback){
 // Optional data: none
 handlers._users.get = function(data,callback){
   // Check that phone number is valid
-  var phone = typeof(data.query.phone) == 'string' && data.query.phone.trim().length == 10 ? data.query.phone.trim() : false;
+  var phone = typeof(data.queryStringObject.phone) == 'string' && data.queryStringObject.phone.trim().length == 10 ? data.queryStringObject.phone.trim() : false;
   if(phone){
+
     // Get token from headers
     var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
     // Verify that the given token is valid for the phone number
@@ -132,12 +135,14 @@ handlers._users.put = function(data,callback){
   if(phone){
     // Error if nothing is sent to update
     if(firstName || lastName || password){
-            // Get token from headers
+
+      // Get token from headers
       var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
 
       // Verify that the given token is valid for the phone number
       handlers._tokens.verifyToken(token,phone,function(tokenIsValid){
         if(tokenIsValid){
+
           // Lookup the user
           _data.read('users',phone,function(err,userData){
             if(!err && userData){
@@ -156,7 +161,6 @@ handlers._users.put = function(data,callback){
                 if(!err){
                   callback(200);
                 } else {
-                  console.log(err);
                   callback(500,{'Error' : 'Could not update the user.'});
                 }
               });
@@ -178,10 +182,12 @@ handlers._users.put = function(data,callback){
 };
 
 // Required data: phone
+// Cleanup old checks associated with the user
 handlers._users.delete = function(data,callback){
   // Check that phone number is valid
-  var phone = typeof(data.query.phone) == 'string' && data.query.phone.trim().length == 10 ? data.query.phone.trim() : false;
+  var phone = typeof(data.queryStringObject.phone) == 'string' && data.queryStringObject.phone.trim().length == 10 ? data.queryStringObject.phone.trim() : false;
   if(phone){
+
     // Get token from headers
     var token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
 
@@ -189,8 +195,9 @@ handlers._users.delete = function(data,callback){
     handlers._tokens.verifyToken(token,phone,function(tokenIsValid){
       if(tokenIsValid){
         // Lookup the user
-        _data.read('users',phone,function(err,data){
-          if(!err && data){
+        _data.read('users',phone,function(err,userData){
+          if(!err && userData){
+            // Delete the user's data
             _data.delete('users',phone,function(err){
               if(!err){
                 // Delete each of the checks associated with the user
@@ -296,7 +303,7 @@ handlers._tokens.post = function(data,callback){
 // Optional data: none
 handlers._tokens.get = function(data,callback){
   // Check that id is valid
-  var id = typeof(data.query.id) == 'string' && data.query.id.trim().length == 20 ? data.query.id.trim() : false;
+  var id = typeof(data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false;
   if(id){
     // Lookup the token
     _data.read('tokens',id,function(err,tokenData){
@@ -351,7 +358,7 @@ handlers._tokens.put = function(data,callback){
 // Optional data: none
 handlers._tokens.delete = function(data,callback){
   // Check that id is valid
-  var id = typeof(data.query.id) == 'string' && data.query.id.trim().length == 20 ? data.query.id.trim() : false;
+  var id = typeof(data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false;
   if(id){
     // Lookup the token
     _data.read('tokens',id,function(err,tokenData){
@@ -429,7 +436,7 @@ handlers._checks.post = function(data,callback){
           if(!err && userData){
             var userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
             // Verify that user has less than the number of max-checks per user
-            if(userChecks.length < /*config.maxChecks */ 5){
+            if(userChecks.length < config.maxChecks){
               // Create random id for check
               var checkId = helpers.createRandomString(20);
 
@@ -464,13 +471,20 @@ handlers._checks.post = function(data,callback){
                   callback(500,{'Error' : 'Could not create the new check'});
                 }
               });
+
+
+
             } else {
-              callback(400,{'Error' : 'The user already has the maximum number of checks ('+/*config.maxChecks*/'5'+').'})
+              callback(400,{'Error' : 'The user already has the maximum number of checks ('+config.maxChecks+').'})
             }
+
+
           } else {
             callback(403);
           }
         });
+
+
       } else {
         callback(403);
       }
@@ -485,7 +499,7 @@ handlers._checks.post = function(data,callback){
 // Optional data: none
 handlers._checks.get = function(data,callback){
   // Check that id is valid
-  var id = typeof(data.query.id) == 'string' && data.query.id.trim().length == 20 ? data.query.id.trim() : false;
+  var id = typeof(data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false;
   if(id){
     // Lookup the check
     _data.read('checks',id,function(err,checkData){
@@ -584,7 +598,7 @@ handlers._checks.put = function(data,callback){
 // Optional data: none
 handlers._checks.delete = function(data,callback){
   // Check that id is valid
-  var id = typeof(data.query.id) == 'string' && data.query.id.trim().length == 20 ? data.query.id.trim() : false;
+  var id = typeof(data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false;
   if(id){
     // Lookup the check
     _data.read('checks',id,function(err,checkData){
@@ -639,6 +653,7 @@ handlers._checks.delete = function(data,callback){
     callback(400,{"Error" : "Missing valid id"});
   }
 };
+
 
 // Export the handlers
 module.exports = handlers;

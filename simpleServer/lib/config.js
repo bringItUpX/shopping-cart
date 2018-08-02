@@ -8,11 +8,12 @@ var environments = {};
 
 // Staging (default) environment
 environments.staging = {
-  /* 'httpPort' : 3000,
+  'httpPort' : 3000,
   'httpsPort' : 3001,
-  'envName' : 'staging',*/
+  'envName' : 'staging',
   'hashingSecret' : 'thisIsASecret',
-    'twilio' : {
+  'maxChecks' : 5,
+  'twilio' : {
     'accountSid' : 'ACb32d411ad7fe886aac54c665d25e5c5d',
     'authToken' : '9455e3eb3109edc12e3d8c92768f7a67',
     'fromPhone' : '+15005550006'
@@ -21,11 +22,12 @@ environments.staging = {
 
 // Production environment
 environments.production = {
-  /*'httpPort' : 5000,
+  'httpPort' : 5000,
   'httpsPort' : 5001,
-  'envName' : 'production',*/
+  'envName' : 'production',
   'hashingSecret' : 'thisIsAlsoASecret',
-    'twilio' : {
+  'maxChecks' : 10,
+  'twilio' : {
     'accountSid' : '',
     'authToken' : '',
     'fromPhone' : ''
